@@ -1,61 +1,137 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🛠️ Gestión de Usuarios con Laravel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este proyecto es un dashboard administrativo hecho en Laravel 12 con autenticación, gestión de roles y permisos usando el paquete `spatie/laravel-permission`. Incluye un CRUD de usuarios con diseño profesional y soporte para modales y paginación.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Funcionalidades
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- ✅ Autenticación de usuarios
+- ✅ CRUD de usuarios (crear, editar, eliminar)
+- ✅ Asignación de roles (admin, editor, viewer)
+- ✅ Permisos personalizados con Spatie
+- ✅ Vistas condicionales según el rol
+- ✅ Interfaz moderna con TailwindCSS
+- ✅ Paginación y búsqueda en tabla
+- ✅ Mensajes de éxito/error automáticos
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🔐 Accesos por defecto
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Rol    | Email                  | Contraseña |
+|--------|------------------------|------------|
+| Admin  | `admin@admin.com`     | `admin`    |
+| Editor | `editor@editor.com`   | `editor`   |
+| Viewer | `viewer1@gmail.com`   | `viewer`   |
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Se generaron 10 usuarios tipo *viewer* (`viewer1@gmail.com` hasta `viewer10@gmail.com`) para visualizar la paginación.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## ⚙️ Modos de acceso disponibles
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 🛡️ Modo 1 — Acceso exclusivo para Admin
 
-### Premium Partners
+Permite que solo los usuarios con rol `admin` accedan al dashboard.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Para activarlo:
 
-## Contributing
+1. En `routes/web.php`, descomenta estas líneas:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```php
+Route::get('/', fn () => redirect('/redirect-by-role'));
 
-## Code of Conduct
+Route::get('/sin-acceso', fn () => view('errors.no-access'));
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Route::get('/redirect-by-role', function () {
+    $user = Auth::user();
 
-## Security Vulnerabilities
+    if ($user->hasRole('admin')) {
+        return redirect()->route('dashboard');
+    }
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    return redirect('/sin-acceso');
+})->middleware(['auth']);
 
-## License
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+});
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+2. En `AuthenticatedSessionController.php`, reemplaza la línea de redirección por:
+
+```php
+$user = Auth::user();
+if ($user->hasRole('admin')) {
+    return redirect()->route('dashboard');
+}
+return redirect('/sin-acceso');
+```
+
+> ⚠️ Esto hará que cualquier usuario que no sea admin reciba una vista personalizada de **acceso denegado** con opción para cerrar sesión.
+
+---
+
+### 🧩 Modo 2 — Acceso por rol (modo flexible)
+
+Permite que cualquier usuario autenticado acceda al dashboard. Lo que se muestre dependerá del rol del usuario.
+
+Para activarlo:
+
+1. En `routes/web.php`, descomenta estas líneas:
+
+```php
+Route::get('/', fn () => redirect('/dashboard'));
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+});
+```
+
+2. En `AuthenticatedSessionController.php`, usa esta redirección al autenticar:
+
+```php
+return redirect()->intended(route('dashboard', absolute: false));
+```
+
+---
+
+## 📷 Capturas de pantalla
+
+
+---
+
+## 📦 Instalación
+
+```bash
+git clone https://github.com/tu-usuario/gestion-usuarios.git
+cd gestion-usuarios
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+npm install && npm run dev
+php artisan serve
+```
+
+---
+
+## 🧠 Paquetes clave usados
+
+- `laravel/breeze` (autenticación ligera)
+- `spatie/laravel-permission` (roles y permisos)
+- `tailwindcss` (diseño)
+- `alpine.js` (modales y comportamiento UI)
+
+---
+
+## 🧑‍💻 Autor
+
+Desarrollado por **[Jesús González]** — como parte del proceso técnico para Prospektiva.

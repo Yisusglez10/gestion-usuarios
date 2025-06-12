@@ -27,7 +27,15 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        
+        // //Si quiere entrar solo con permisos de admin descomentar esto
+        // $user = Auth::user();
+        // if ($user->hasRole('admin')) {
+        //     return redirect()->route('dashboard');
+        // }
+        // return redirect('/sin-acceso');
 
+        // Si quiere entrar a diferentes vistas en el dashboard descomentar esto
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

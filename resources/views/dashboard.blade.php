@@ -87,25 +87,44 @@
                                         <td class="border px-4 py-2">{{ $user->roles->pluck('name')->implode(', ') }}</td>
                                         @if (auth()->user()->hasAnyRole(['admin', 'editor']))
                                             <td class="border px-4 py-2">
-                                                <a
-                                                    href="#"
-                                                    @click.prevent="
-                                                        openEditModal = true;
-                                                        form.id = {{ $user->id }};
-                                                        form.name = '{{ $user->name }}';
-                                                        form.email = '{{ $user->email }}';
-                                                        form.role = '{{ $user->roles->first()->name ?? '' }}';
-                                                    "
-                                                    class="text-blue-600 hover:underline"
-                                                >Editar</a>
+                                                <div class="flex items-center gap-3">
+                                                    {{-- Botón Editar --}}
+                                                    <button
+                                                        @click.prevent="
+                                                            openEditModal = true;
+                                                            form.id = {{ $user->id }};
+                                                            form.name = '{{ $user->name }}';
+                                                            form.email = '{{ $user->email }}';
+                                                            form.role = '{{ $user->roles->first()->name ?? '' }}';
+                                                        "
+                                                        class="text-blue-600 hover:text-blue-800 p-1"
+                                                        title="Editar"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                d="M15.232 5.232l3.536 3.536M4 20h4l10-10-4-4L4 16v4z"/>
+                                                        </svg>
+                                                    </button>
 
-                                                @if (auth()->user()->hasRole('admin'))
-                                                    <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este usuario?');" style="display:inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:underline">Eliminar</button>
-                                                    </form>
-                                                @endif
+                                                    {{-- Botón Eliminar --}}
+                                                    @if (auth()->user()->hasRole('admin'))
+                                                        <form method="POST" action="{{ route('users.destroy', $user) }}"
+                                                            onsubmit="return confirm('¿Estás seguro de que deseas eliminar este usuario?');"
+                                                            class="p-0 m-0"
+                                                        >
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="text-red-600 hover:text-red-800 p-1" title="Eliminar">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                        d="M19 7L5 7M6 7v12a2 2 0 002 2h8a2 2 0 002-2V7M9 10v6m6-6v6M10 4h4a1 1 0 011 1v1H9V5a1 1 0 011-1z"/>
+                                                                </svg>
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                </div>
                                             </td>
                                         @endif
                                     </tr>

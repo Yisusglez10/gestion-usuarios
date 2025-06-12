@@ -40,53 +40,79 @@
                             </button>
                         @endif
                     </div>
-
-                    <table class="table-auto w-full text-left border-collapse border border-gray-200">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="border px-4 py-2">ID</th>
-                                <th class="border px-4 py-2">Nombre</th>
-                                <th class="border px-4 py-2">Correo</th>
-                                <th class="border px-4 py-2">Rol</th>
-                                @if (auth()->user()->hasAnyRole(['admin', 'editor']))
-                                    <th class="border px-4 py-2">Acciones</th>
-                                @endif
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($users as $user)
+                    <div class="overflow-x-auto">
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Buscar..."
+                            class="mb-4 p-2 border rounded w-full md:w-1/3"
+                        />
+                        <table 
+                            x-data="tableData()" 
+                            class="table-auto w-full text-left border-collapse border border-gray-200"
+                            id="userTable"
+                        >
+                            <thead class="bg-gray-100">
                                 <tr>
-                                    <td class="border px-4 py-2">{{ $user->id }}</td>
-                                    <td class="border px-4 py-2">{{ $user->name }}</td>
-                                    <td class="border px-4 py-2">{{ $user->email }}</td>
-                                    <td class="border px-4 py-2">{{ $user->roles->pluck('name')->implode(', ') }}</td>
-                                    @if (auth()->user()->hasAnyRole(['admin', 'editor']))
-                                        <td class="border px-4 py-2">
-                                            <a
-                                                href="#"
-                                                @click.prevent="
-                                                    openEditModal = true;
-                                                    form.id = {{ $user->id }};
-                                                    form.name = '{{ $user->name }}';
-                                                    form.email = '{{ $user->email }}';
-                                                    form.role = '{{ $user->roles->first()->name ?? '' }}';
-                                                "
-                                                class="text-blue-600 hover:underline"
-                                            >Editar</a>
-
-                                            @if (auth()->user()->hasRole('admin'))
-                                                <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este usuario?');" style="display:inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-red-600 hover:underline">Eliminar</button>
-                                                </form>
-                                            @endif
-                                        </td>
-                                    @endif
+                                    <th class="border px-4 py-2 cursor-pointer" @click="sort('id')">
+                                        ID 
+                                        <span x-show="sortColumn !== 'id'" class="text-gray-400">↑↓</span>
+                                        <span x-show="sortColumn === 'id'" x-text="sortAsc ? '↑' : '↓'"></span>
+                                    </th>
+                                    <th class="border px-4 py-2 cursor-pointer" @click="sort('name')">
+                                        Nombre 
+                                        <span x-show="sortColumn !== 'name'" class="text-gray-400">↑↓</span>
+                                        <span x-show="sortColumn === 'name'" x-text="sortAsc ? '↑' : '↓'"></span>
+                                    </th>
+                                    <th class="border px-4 py-2 cursor-pointer" @click="sort('email')">
+                                        Correo 
+                                        <span x-show="sortColumn !== 'email'" class="text-gray-400">↑↓</span>
+                                        <span x-show="sortColumn === 'email'" x-text="sortAsc ? '↑' : '↓'"></span>
+                                    </th>
+                                    <th class="border px-4 py-2 cursor-pointer" @click="sort('role')">
+                                        Rol 
+                                        <span x-show="sortColumn !== 'role'" class="text-gray-400">↑↓</span>
+                                        <span x-show="sortColumn === 'role'" x-text="sortAsc ? '↑' : '↓'"></span>
+                                    </th>
+                                    <th class="border px-4 py-2">Acciones</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+
+                            <tbody>
+                                @foreach ($users as $user)
+                                    <tr>
+                                        <td class="border px-4 py-2">{{ $user->id }}</td>
+                                        <td class="border px-4 py-2">{{ $user->name }}</td>
+                                        <td class="border px-4 py-2">{{ $user->email }}</td>
+                                        <td class="border px-4 py-2">{{ $user->roles->pluck('name')->implode(', ') }}</td>
+                                        @if (auth()->user()->hasAnyRole(['admin', 'editor']))
+                                            <td class="border px-4 py-2">
+                                                <a
+                                                    href="#"
+                                                    @click.prevent="
+                                                        openEditModal = true;
+                                                        form.id = {{ $user->id }};
+                                                        form.name = '{{ $user->name }}';
+                                                        form.email = '{{ $user->email }}';
+                                                        form.role = '{{ $user->roles->first()->name ?? '' }}';
+                                                    "
+                                                    class="text-blue-600 hover:underline"
+                                                >Editar</a>
+
+                                                @if (auth()->user()->hasRole('admin'))
+                                                    <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este usuario?');" style="display:inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:underline">Eliminar</button>
+                                                    </form>
+                                                @endif
+                                            </td>
+                                        @endif
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -208,3 +234,50 @@
         </div>
     </div>
 </x-app-layout>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('tableData', () => ({
+            sortColumn: '',
+            sortAsc: true,
+            sort(column) {
+                const table = document.getElementById('userTable').getElementsByTagName('tbody')[0];
+                const rows = Array.from(table.querySelectorAll('tr'));
+
+                const columnIndex = {
+                    id: 0,
+                    name: 1,
+                    email: 2,
+                    role: 3,
+                }[column];
+
+                rows.sort((a, b) => {
+                    let valA = a.children[columnIndex].innerText.trim().toLowerCase();
+                    let valB = b.children[columnIndex].innerText.trim().toLowerCase();
+                    
+                    return (this.sortAsc ? 1 : -1) * valA.localeCompare(valB);
+                });
+
+                this.sortAsc = this.sortColumn === column ? !this.sortAsc : true;
+                this.sortColumn = column;
+
+                rows.forEach(row => table.appendChild(row));
+            }
+        }));
+    });
+
+    // Buscador
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('searchInput');
+        const tableRows = document.querySelectorAll('#userTable tbody tr');
+
+        input.addEventListener('input', function () {
+            const query = this.value.toLowerCase();
+
+            tableRows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
+    });
+</script>

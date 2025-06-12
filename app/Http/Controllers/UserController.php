@@ -8,8 +8,11 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-   public function store(Request $request)
+
+    public function store(Request $request)
     {
+        session()->flash('form_type', 'create');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -29,15 +32,29 @@ class UserController extends Controller
 
         $user->assignRole($validated['role']);
 
-        return redirect()->route('dashboard')->with('success', 'Usuario creado exitosamente.');
+        return redirect()->route('dashboard')->with('success', 'Usuario creado exitosamente.')->with('form_type', 'create');
+        
     }
 
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
+        $request->merge(['id' => $user->id]);
+        session()->flash('form_type', 'edit');
+
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|exists:roles,name',
+        ];
+
+        if ($request->filled('password')) {
+            $rules['password'] = 'string|min:6|confirmed';
+        }
+
+        $validated = $request->validate($rules, [
+            'email.unique' => 'Este correo ya está registrado. Intenta con otro.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'password.min' => 'La contraseña debe tener al menos 6 caracteres.',
         ]);
 
         $user->update([
@@ -45,9 +62,16 @@ class UserController extends Controller
             'email' => $validated['email'],
         ]);
 
+        if ($request->filled('password')) {
+            $user->update([
+                'password' => bcrypt($validated['password']),
+            ]);
+        }
+
         $user->syncRoles([$validated['role']]);
 
-        return redirect()->route('dashboard')->with('success', 'Usuario actualizado correctamente.');
+        return redirect()->route('dashboard')->with('success', 'Usuario actualizado correctamente.')->with('form_type', 'edit');
+
     }
 
     public function destroy(User $user)

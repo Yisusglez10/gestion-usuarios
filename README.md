@@ -23,9 +23,9 @@ Este proyecto es un dashboard administrativo hecho en Laravel 12 con autenticaci
 |--------|------------------------|------------|
 | Admin  | `admin@admin.com`     | `admin`    |
 | Editor | `editor@editor.com`   | `editor`   |
-| Viewer | `viewer1@gmail.com`   | `viewer`   |
+| Viewer | `viewer1@viewer.com`   | `viewer`   |
 
-Se generaron 10 usuarios tipo *viewer* (`viewer1@gmail.com` hasta `viewer10@gmail.com`) para visualizar la paginación.
+Se generaron 10 usuarios tipo *viewer* (`viewer1@viewer.com` hasta `viewer10@viewer.com`) para visualizar la paginación.
 
 ---
 

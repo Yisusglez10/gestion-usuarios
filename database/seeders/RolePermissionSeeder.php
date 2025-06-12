@@ -47,13 +47,16 @@ class RolePermissionSeeder extends Seeder
         );
         $editor->assignRole('editor');
 
-        $viewer = User::firstOrCreate(
-            ['email' => 'viewer@viewer.com'],
-            [
-                'name' => 'Viewer',
-                'password' => bcrypt('viewer'),
-            ]
-        );
-        $viewer->assignRole('viewer');
+        // Crear 10 viewers
+        for ($i = 1; $i <= 10; $i++) {
+            $viewer = User::firstOrCreate(
+                ['email' => "viewer{$i}@viewer.com"],
+                [
+                    'name' => "Viewer {$i}",
+                    'password' => bcrypt("viewer{$i}"),
+                ]
+            );
+            $viewer->assignRole('viewer');
+        }
     }
 }

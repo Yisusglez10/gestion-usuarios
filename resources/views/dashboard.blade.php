@@ -54,11 +54,6 @@
                         >
                             <thead class="bg-gray-100">
                                 <tr>
-                                    <th class="border px-4 py-2 cursor-pointer" @click="sort('id')">
-                                        ID 
-                                        <span x-show="sortColumn !== 'id'" class="text-gray-400">↑↓</span>
-                                        <span x-show="sortColumn === 'id'" x-text="sortAsc ? '↑' : '↓'"></span>
-                                    </th>
                                     <th class="border px-4 py-2 cursor-pointer" @click="sort('name')">
                                         Nombre 
                                         <span x-show="sortColumn !== 'name'" class="text-gray-400">↑↓</span>
@@ -74,14 +69,15 @@
                                         <span x-show="sortColumn !== 'role'" class="text-gray-400">↑↓</span>
                                         <span x-show="sortColumn === 'role'" x-text="sortAsc ? '↑' : '↓'"></span>
                                     </th>
-                                    <th class="border px-4 py-2">Acciones</th>
+                                    @if (auth()->user()->hasAnyRole(['admin', 'editor']))
+                                        <th class="border px-4 py-2">Acciones</th>
+                                    @endif
                                 </tr>
                             </thead>
 
                             <tbody>
                                 @foreach ($users as $user)
                                     <tr>
-                                        <td class="border px-4 py-2">{{ $user->id }}</td>
                                         <td class="border px-4 py-2">{{ $user->name }}</td>
                                         <td class="border px-4 py-2">{{ $user->email }}</td>
                                         <td class="border px-4 py-2">{{ $user->roles->pluck('name')->implode(', ') }}</td>
@@ -131,6 +127,9 @@
                                 @endforeach
                             </tbody>
                         </table>
+                        <div class="mt-4">
+                            {{ $users->links() }}
+                        </div>
                     </div>
                 </div>
             </div>
